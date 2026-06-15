@@ -67,10 +67,14 @@ int i2c_transfer(int fd, int addr, unsigned char reg, unsigned char *data, int l
     return ioctl(fd, I2C_RDWR, &msgset);
 }
 ```
+---
+
 ### 2.2 Glavna petlja aplikacije (main)
 * **Inicijalizacija:** Kreira se sirovi mrežni socket za CAN (SOCK_RAW), vezuje se za proslijeđeni mrežni interfejs (can0), i otvara se fajl deskriptor za lokalni I2C kontroler (/dev/i2c-1).
 * **Filtriranje uređaja:** Aplikacija prihvata samo okvire čiji se gornji 4 bita CAN ID-a poklapaju sa lokalno zadatim my_dev_id.
 * **Traženje stanja (RTR memorija):** Koriste se statičke promjenljive last_addr i last_reg kako bi gateway zapamtio koja je bila posljednja adresirana lokacija, što omogućava korektno izvršavanje nadolazećeg RTR okvira.
+
+---
 
 ### 3. Matrica testnih scenarija i komande
 Za demonstraciju rada korišćen je Raspberry Pi kao gateway, dok se simulacija generisanja CAN okvira vrši pomoću Linux `cansend` i `candump` alata iz can-utils paketa.
@@ -78,8 +82,9 @@ Za demonstraciju rada korišćen je Raspberry Pi kao gateway, dok se simulacija 
 U primjerima ispod pretpostavićemo da je aplikacija pokrenuta sa parametrom za Device ID = 2 (0x2), a I2C slave uređaj se nalazi na adresi 0x3A.
 Iz toga slijedi bazni **CAN ID = (0x2 << 7) | 0x3A = 0x13A.**
 
-Scenario,Opis operacije,Komanda za slanje (cansend),Očekivani odgovor (candump)
-1. Uspješan upis,Upis vrijednosti 0xFF u registar 0x10,cansend can0 13A#1000FF,can0 13A [2] 10 00
-2. Uspješno čitanje,Čitanje 1 bajta iz registra 0x15,cansend can0 13A#1580,can0 13A [3] 15 80 DA (gdje je DA podatak)
-3. RTR Čitanje,Ponovno čitanje iz zadnjeg registra,cansend can0 13A#R,can0 13A [3] 15 80 DA
-4. I2C Greška,Pokušaj pristupa nepostojećoj I2C adresi,cansend can0 17F#0000 (adresa 0x7F),can0 17F [2] 00 04
+| Scenario | Opis operacije | Komanda za slanje (cansend) | Očekivani odgovor (candump) |
+| :--- | :--- | :--- | :--- |
+| **1. Uspješan upis** | Upis vrijednosti 0xFF u registar 0x10 | `cansend can0 13A#1000FF` | `can0 13A [2] 10 00` |
+| **2. Uspješno čitanje** | Čitanje 1 bajta iz registra 0x15 | `cansend can0 13A#1580` | `can0 13A [3] 15 80 DA` *(gdje je DA podatak)* |
+| **3. RTR Čitanje** | Ponovno čitanje iz zadnjeg registra | `cansend can0 13A#R` | `can0 13A [3] 15 80 DA` |
+| **4. I2C Greška** | Pokušaj pristupa nepostojećoj I2C adresi | `cansend can0 17F#0000` *(adresa 0x7F)* | `can0 17F [2] 00 04` |
