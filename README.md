@@ -130,7 +130,8 @@ can0  13A   [3]  15 80 DA
 ```
 **Objašnjenje:** Gateway vraća *DLC=3*. *Data[0]=0x15* (potvrda registra), *Data[1]=0x80* (status uspješnog čitanja, nema postavljenih bita greške), , *Data[2]=DA* (pročitani podatak sa I2C magistrale).
 
-> **Note (RTR okvir):** Ukoliko želimo poslati RTR okvir, koristi se komanda sa sufiksom `#R` (npr. `cansend can0 13A#R`). U tom slučaju očekujemo povratni ispis koji je potpuno analogan standardnom čitanju podataka (kao u Scenariju 2), jer gateway automatski vraća posljednju poznatu vrijednost iz memorije.
+> [!NOTE]
+> Ukoliko želimo poslati RTR okvir, koristi se komanda sa sufiksom `#R` (npr. `cansend can0 13A#R`). U tom slučaju očekujemo povratni ispis koji je potpuno analogan standardnom čitanju podataka (kao u Scenariju 2), jer gateway automatski vraća posljednju poznatu vrijednost iz memorije.
 
 #### Scenario 3: Pokušaj čitanja sa nepostojeće adrese / nepostojećeg registra
 Želimo izvršiti čitanje iz registra `0x99` koji ne postoji na I2C uređaju, ili sa I2C adrese koja je ispravna ali ne podržava taj specifični registar.
