@@ -76,7 +76,7 @@ int i2c_transfer(int fd, int addr, unsigned char reg, unsigned char *data, int l
 
 ---
 
-### 3. Matrica testnih scenarija i komande
+## 3. Matrica testnih scenarija i komande
 Za demonstraciju rada korišćen je Raspberry Pi kao gateway, dok se simulacija generisanja CAN okvira vrši pomoću Linux `cansend` i `candump` alata iz can-utils paketa.
 
 U primjerima ispod pretpostavićemo da je aplikacija pokrenuta sa parametrom za Device ID = 2 (0x2), a I2C slave uređaj se nalazi na adresi 0x3A.
@@ -88,3 +88,79 @@ Iz toga slijedi bazni **CAN ID = (0x2 << 7) | 0x3A = 0x13A.**
 | **2. Uspješno čitanje** | Čitanje 1 bajta iz registra 0x15 | `cansend can0 13A#1580` | `can0 13A [3] 15 80 DA` *(gdje je DA podatak)* |
 | **3. RTR Čitanje** | Ponovno čitanje iz zadnjeg registra | `cansend can0 13A#R` | `can0 13A [3] 15 80 DA` |
 | **4. I2C Greška** | Pokušaj pristupa nepostojećoj I2C adresi | `cansend can0 17F#0000` *(adresa 0x7F)* | `can0 17F [2] 00 04` |
+
+---
+### 3.1 Detaljna analiza testnih slučajeva
+
+#### Scenario 1: Uspješan upis podataka
+Želimo upisati vrijednost `0xFF` u registar `0x10` I2C uređaja na adresi `0x3A`.
+
+* **CAN ID:** `0x13A`
+* **Data polje poruke:** `10 00 FF`
+    * `Data[0] = 0x10` (Registar)
+    * `Data[1] = 0x00` (Bit 7 je 0 $\rightarrow$ upis)
+    * `Data[2] = 0xFF` (Podatak)
+
+**Pokretanje:**
+```bash
+cansend can0 13A#1000FF
+```
+Očekivani povratni okvir (candump):
+```bash
+can0  13A   [2]  10 00
+```
+**Objašnjenje:** Gateway vraća *DLC=2*. *Data[0]=0x10* (potvrda registra), *Data[1]=0x00* (status uspješnog upisa, nema postavljenih bita greške).
+
+
+#### Scenario 2: Uspješno standardno čitanje podataka
+Želimo upročitti podatak iz registra `0x15`.
+
+* **CAN ID:** `0x13A`
+* **Data polje poruke:** `15 80`
+    * `Data[0] = 0x15` (Registar)
+    * `Data[1] = 0x80` (Bit 7 je 0 $\rightarrow$ čitanje, binarno 1000 0000)
+
+**Pokretanje:**
+```bash
+cansend can0 13A#1580
+```
+Očekivani povratni okvir (candump):
+```bash
+can0  13A   [3]  15 80 DA
+```
+**Objašnjenje:** Gateway vraća *DLC=3*. *Data[0]=0x15* (potvrda registra), *Data[1]=0x80* (status uspješnog čitanja, nema postavljenih bita greške), , *Data[2]=DA* (pročitani podatak sa I2C magistrale).
+
+> **Note (RTR okvir):** Ukoliko želimo poslati RTR okvir, koristi se komanda sa sufiksom `#R` (npr. `cansend can0 13A#R`). U tom slučaju očekujemo povratni ispis koji je potpuno analogan standardnom čitanju podataka (kao u Scenariju 2), jer gateway automatski vraća posljednju poznatu vrijednost iz memorije.
+
+#### Scenario 3: Pokušaj čitanja sa nepostojeće adrese / nepostojećeg registra
+Želimo izvršiti čitanje iz registra `0x99` koji ne postoji na I2C uređaju, ili sa I2C adrese koja je ispravna ali ne podržava taj specifični registar.
+
+* **CAN ID:** `0x13A`
+* **Data polje poruke:** `99 80`
+    * `Data[0] = 0x99` (Nepostojeći/nevalidan registar)
+    * `Data[1] = 0x80` (Bit 7 je 1 $\rightarrow$ Čitanje)
+
+**Pokretanje:**
+```bash
+cansend can0 13A#9980
+```
+Očekivani povratni okvir (candump):
+```bash
+can0  13A   [2]  99 04
+```
+**Objašnjenje:** Gateway pokušava izvršiti I2C transakciju čitanja za registar `0x99`. Budući da uređaj šalje NACK na pokušaj pristupa ovoj adresi registra, funkcija `i2c_transfer` javlja grešku. Gateway vraća DLC=2, gdje `Data[0]=0x99` potvrđuje ciljani registar, a statusni bajt `Data[1]=0x04` signalizira grešku na magistrali (analogno ponašanju u Scenariju 4).
+
+## 4. Uputstvo za pokretanje aplikacije
+
+### Kompajliranje
+Kompajliranje se vrši standardnim `gcc` prevodiocem na Linuxu:
+
+```bash
+gcc -o can_i2c_gateway main.c
+```
+*Pokretanje*
+Aplikacija zahtijeva dva argumenta komandne linije: ime CAN interfejsa i željeni Device ID (u opsegu 0-15).
+```bash
+sudo ./can_i2c_gateway can0 2
+```
+
