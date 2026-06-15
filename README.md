@@ -66,3 +66,10 @@ int i2c_transfer(int fd, int addr, unsigned char reg, unsigned char *data, int l
     }
     return ioctl(fd, I2C_RDWR, &msgset);
 }
+```
+### 2.2 Glavna petlja aplikacije (main)
+Inicijalizacija: Kreira se sirovi mrežni socket za CAN (SOCK_RAW), vezuje se za proslijeđeni mrežni interfejs (npr. can0), i otvara se fajl deskriptor za lokalni I2C kontroler (/dev/i2c-1).
+
+Filtriranje uređaja: Aplikacija prihvata samo okvire čiji se gornji 4 bita CAN ID-a poklapaju sa lokalno zadatim my_dev_id.
+
+Traženje stanja (RTR memorija): Koriste se statičke promjenljive last_addr i last_reg kako bi gateway zapamtio koja je bila posljednja adresirana lokacija, što omogućava korektno izvršavanje nadolazećeg RTR okvira.
