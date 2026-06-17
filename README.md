@@ -194,8 +194,8 @@ Nakon pokušaja I2C komunikacije, program provjerava da li je bilo grešaka i u 
 ## 3. Matrica testnih scenarija i komande
 Za demonstraciju rada korišćen je Raspberry Pi kao gateway, dok se simulacija generisanja CAN okvira vrši pomoću Linux `cansend` i `candump` alata iz can-utils paketa.
 
-U primjerima ispod pretpostavićemo da je aplikacija pokrenuta sa parametrom za Device ID = 2 (0x2), a I2C slave uređaj se nalazi na adresi 0x3A.
-Iz toga slijedi bazni **CAN ID = (0x2 << 7) | 0x3A = 0x13A.**
+U primjerima ispod pretpostavićemo da je aplikacija pokrenuta sa parametrom za Device ID = 5 (0x5), a I2C slave uređaj se nalazi na adresi 0x1D.
+Iz toga slijedi bazni **CAN ID = (0x5 << 7) | 0x1D = 0x29D.**
 
 | Scenario | Opis operacije | Komanda za slanje (cansend) | Očekivani odgovor (candump) |
 | :--- | :--- | :--- | :--- |
