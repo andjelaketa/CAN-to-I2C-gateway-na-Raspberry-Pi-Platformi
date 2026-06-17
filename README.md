@@ -30,7 +30,7 @@ Struktura bajtova u CAN okviru zavisi od operacije, ali generalno prati pravilo:
 
 ---
 
-## 2. Analiza softverske implementacije
+## 2. Analiza softverske implementacije ##
 
 Aplikacija je realizovana u C-u koristeći standardni Linux **SocketCAN** interfejs i **i2c-dev** drajverski podsistem preko `ioctl` poziva. Rad aplikacije biće objašnjen u nastavku, po funkcijama od kojih se sastoji.
 ---
