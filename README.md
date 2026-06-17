@@ -31,8 +31,7 @@ Struktura bajtova u CAN okviru zavisi od operacije, ali generalno prati pravilo:
 ---
 
 ## 2. Analiza softverske implementacije ##
-
-Aplikacija je realizovana u C-u koristeći standardni Linux **SocketCAN** interfejs i **i2c-dev** drajverski podsistem preko `ioctl` poziva. Rad aplikacije biće objašnjen u nastavku, po funkcijama od kojih se sastoji.
+Aplikacija je realizovana u C-u koristeći standardni Linux **SocketCAN** interfejs i **i2c-dev** drajverski podsistem preko `ioctl` poziva. Rad aplikacije biće objašnjen u nastavku, po funkcijama od kojih se sastoji. daj mi ovaj tekst ya markdown ali da ne bude boldiran
 ---
 ### 2.1 I2C Transfer funkcija (`i2c_transfer`)
 ```c
@@ -74,7 +73,7 @@ Navedena funckija obavlja čitanje i upis u registar. Funkcija prima parametre:
 * **int is_read**: kontrolna promjenljiva koja ima vrijednost 1 ako želimo da izvršimo čitanje i 0 ako se vrši upis.
 Ova funkcija koristi standardni Linux _ioctl_ (I/O control) meganizam za komunikaciju sa I2C uređajem. Rad funkcije se oslanja na strukture i2c_msg (definiše jednu I2C poruku) i _i2c_rdwr_ioctl_data_ (koja grupiše više poruka u jedan transfer).
 ---
-### 2.1 Is register R/W funkcija (`is_register_rw`)
+### 2.2 Is register R/W funkcija (`is_register_rw`)
 ```c
 int is_register_rw(unsigned char reg) {
 
