@@ -67,7 +67,7 @@ Navedena funckija obavlja čitanje i upis u registar. Funkcija prima parametre:
 * **int fd**: File Descriptor. Opisuje fajl za otvoren I2C interfejs. Preko ovog parametra funkcija zna na kom hardverskom I2C magistralnom vodu treba da izvrši komunikaciju.
 * **int addr**: I2C adresa ciljnog uređaja na magistrali sa kojm želimo da komuniciramo
 * **unsigned char reg**: adresa specifičnog registra unutar ciljnog I2C uređaja iz kojeg želimo da čitammo podatke ili u koji želimo podatke da upišemo.
-* **unsigned char *data **: Pokazivač na niz bajtova (bafer). Ukoliko se vrši operacija čitanja, pročitani podaci že biti smješteni u taj bafer. Ukoliko se vrđi upis, podaci koji treba da se upišu se nalaze u tom baferu.
+* unsigned char *data: Pokazivač na niz bajtova (bafer). Ukoliko se vrši operacija čitanja, pročitani podaci že biti smješteni u taj bafer. Ukoliko se vrđi upis, podaci koji treba da se upišu se nalaze u tom baferu.
 * **int len**: broj bajtova koji se čita ili upisuje.
 * **int is_read**: kontrolna promjenljiva koja ima vrijednost 1 ako želimo da izvršimo čitanje i 0 ako se vrši upis.
 Ova funkcija koristi standardni Linux _ioctl_ (I/O control) meganizam za komunikaciju sa I2C uređajem. Rad funkcije se oslanja na strukture i2c_msg (definiše jednu I2C poruku) i _i2c_rdwr_ioctl_data_ (koja grupiše više poruka u jedan transfer).
