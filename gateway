@@ -1,0 +1,135 @@
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+#include <fcntl.h>
+#include <sys/ioctl.h>
+#include <sys/socket.h>
+#include <linux/can.h>
+#include <linux/can/raw.h>
+#include <linux/i2c-dev.h>
+#include <linux/i2c.h>
+#include <net/if.h>
+
+int i2c_transfer(int fd, int addr, unsigned char reg, unsigned char *data, int len, int is_read) {
+    struct i2c_msg msgs[2];
+    struct i2c_rdwr_ioctl_data msgset;
+    unsigned char reg_buf = reg;
+
+    msgs[0].addr = addr;
+    msgs[0].flags = 0;
+    msgs[0].buf = &reg_buf;
+    msgs[0].len = 1;
+
+    msgset.msgs = msgs;
+    msgset.nmsgs = 1;
+
+    if (is_read) {
+        msgs[1].addr = addr;
+        msgs[1].flags = I2C_M_RD;
+        msgs[1].buf = data;
+        msgs[1].len = len;
+        msgset.nmsgs = 2;
+    } else {
+        msgs[0].len = 1 + len;
+        unsigned char buf[9];
+        buf[0] = reg;
+        memcpy(buf + 1, data, len);
+        msgs[0].buf = buf;
+    }
+    return ioctl(fd, I2C_RDWR, &msgset);
+}
+
+int is_register_rw(unsigned char reg) {
+
+    if (reg == 0x31 || reg == 0x38) {
+        return 1;
+    }
+    if (reg >= 0x1D && reg <= 0x2A) {
+        return 1;
+    }
+    if (reg >= 0x2C && reg <= 0x2F) {
+        return 1;
+    }
+
+    return 0;
+}
+
+int main(int argc, char *argv[]) {
+    if (argc < 3) return 1;
+   
+    int can_sock = socket(PF_CAN, SOCK_RAW, CAN_RAW);
+    struct ifreq ifr;
+    strcpy(ifr.ifr_name, argv[1]);
+    ioctl(can_sock, SIOCGIFINDEX, &ifr);
+   
+    struct sockaddr_can addr = { .can_family = AF_CAN, .can_ifindex = ifr.ifr_ifindex };
+    bind(can_sock, (struct sockaddr *)&addr, sizeof(addr));
+   
+    int i2c_fd = open("/dev/i2c-1", O_RDWR);
+    unsigned char my_dev_id = (unsigned char)atoi(argv[2]) & 0x0F;
+   
+    static unsigned char last_addr = 0, last_reg = 0;
+
+    while (1) {
+        struct can_frame frame;
+        if (read(can_sock, &frame, sizeof(frame)) < 0) continue;
+
+        unsigned char rx_dev_id = (frame.can_id >> 7) & 0x0F;
+        if (rx_dev_id != my_dev_id) continue;
+
+        printf("\n[PRIMLJENO] ID: 0x%03X | RTR: %s | Len: %d",
+               frame.can_id & 0x7FF,
+               (frame.can_id & CAN_RTR_FLAG) ? "DA" : "NE",
+               frame.can_dlc);
+
+        unsigned char i2c_addr = frame.can_id & 0x7F;
+        unsigned char reg = (frame.can_id & CAN_RTR_FLAG) ? last_reg : frame.data[0];
+       
+        struct can_frame tx_frame = { .can_id = frame.can_id & CAN_SFF_MASK, .can_dlc = 2 };
+        int status = 0;
+        int valid_rw = 1;
+
+        if (!(frame.can_id & CAN_RTR_FLAG)) {
+            last_addr = i2c_addr;
+            last_reg = reg;
+           
+            if ((frame.data[1] >> 7) & 0x01) {
+                printf(" | Tip: Citanje (Reg: 0x%02X)", reg);
+                status = i2c_transfer(i2c_fd, i2c_addr, reg, &tx_frame.data[2], 1, 1);
+                tx_frame.can_dlc = 3;
+            } else {
+                printf(" | Tip: Upis (Reg: 0x%02X, Data: 0x%02X)", reg, frame.data[2]);
+               
+
+                if (is_register_rw(reg)) {
+                    status = i2c_transfer(i2c_fd, i2c_addr, reg, &frame.data[2], frame.can_dlc - 2, 0);
+                } else {
+                    printf(" -> БЛОКИРАНО: Регистар је Read-Only!");
+                    valid_rw = 0;
+                }
+            }
+        } else {
+            printf(" | Tip: RTR Citanje (Reg: 0x%02X)", last_reg);
+            status = i2c_transfer(i2c_fd, last_addr, last_reg, &tx_frame.data[2], 1, 1);
+            tx_frame.can_dlc = 3;
+        }
+
+
+        if (status < 0 || !valid_rw) {
+            if (status < 0) printf(" -> I2C GRESKA!");
+            tx_frame.data[1] = 0x04;
+        } else {
+            printf(" -> I2C USPEH!");
+            tx_frame.data[1] = (frame.can_id & CAN_RTR_FLAG) ? 0x80 : 0x00;
+        }
+
+        tx_frame.data[0] = reg;
+       
+        usleep(1000);
+        write(can_sock, &tx_frame, sizeof(tx_frame));
+        printf("\n[POSLATO] Statusni okvir poslat.\n");
+    }
+    return 0;
+}
