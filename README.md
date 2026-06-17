@@ -31,8 +31,7 @@ Struktura bajtova u CAN okviru zavisi od operacije, ali generalno prati pravilo:
 ---
 
 ## 2. Analiza softverske implementacije ##
-Aplikacija je realizovana u C-u koristeći standardni Linux **SocketCAN** interfejs i **i2c-dev** drajverski podsistem preko `ioctl` poziva. Rad aplikacije biće objašnjen u nastavku, po funkcijama od kojih se sastoji. daj mi ovaj tekst ya markdown ali da ne bude boldiran
----
+Aplikacija je realizovana u C-u koristeći standardni Linux **SocketCAN** interfejs i **i2c-dev** drajverski podsistem preko `ioctl` poziva. Rad aplikacije biće objašnjen u nastavku, po funkcijama od kojih se sastoji. 
 ### 2.1 I2C Transfer funkcija (`i2c_transfer`)
 ```c
 int i2c_transfer(int fd, int addr, unsigned char reg, unsigned char *data, int len, int is_read) {
