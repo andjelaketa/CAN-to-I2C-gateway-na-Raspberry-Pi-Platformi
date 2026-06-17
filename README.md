@@ -164,10 +164,11 @@ Aplikacija zahtijeva dva argumenta komandne linije: ime CAN interfejsa i željen
 ```bash
 sudo ./can_i2c_gateway can0 2
 ```
-### Prilikom testiranja aplikacije, (navođenja registara u koje će se vršiti upis ili iz kojih će se vršiti čitanje) mora se voditi računa o statusu registra. Neki registri I2C senzora koji je kokrišten u okviru projekta, podržavaju samo čitanje (read only). Korisnik će biti obaviješten, porukom, da pokušava izvršiti upis u takav registar, međutim čitanje je dozvoljeno i sprovodi se bez dodatnih komentara korisniku.
+> [!NOTE]
+> Prilikom testiranja aplikacije, (navođenja registara u koje će se vršiti upis ili iz kojih će se vršiti čitanje) mora se voditi računa o statusu registra. Neki registri I2C senzora koji je kokrišten u okviru projekta, podržavaju samo čitanje (read only). Korisnik će biti obaviješten, porukom, da pokušava izvršiti upis u takav registar, međutim čitanje je dozvoljeno i sprovodi se bez dodatnih komentara korisniku.
 
 ## 5. Značajni segmenti koda
-###5.1. Funkcija int i2c_transfer(int fd, int addr, unsigned char reg, unsigned char *data, int len, int is_read)
+### 5.1. Funkcija int i2c_transfer(int fd, int addr, unsigned char reg, unsigned char *data, int len, int is_read)
 Navedena funkcija izvršava čitanje i upis u registar. Zadnji parametar koji funkcija prima je 'int is_read' te pomoću njega definišemo da li se radi o čitanju iz registra ( ako jeste ima vrijednost 1 ) ili o upisu u registar (vrijednost 0).
 
 
